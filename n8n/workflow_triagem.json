@@ -1,0 +1,543 @@
+{
+  "name": "Triar Saúde - Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "triar-saude",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -64,
+        -240
+      ],
+      "id": "ffe74e1e-50ca-442f-9866-0f62127c0edd",
+      "name": "Webhook",
+      "webhookId": "14747f5b-f7cd-4e9e-9abf-ad706ffff73e"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d15f2a9b-26f6-4d19-b003-5425ed92900d",
+              "name": "mensagem",
+              "value": "={{ $json.body.mensagem ?? $json.mensagem }}",
+              "type": "string"
+            },
+            {
+              "id": "5e18d82b-06f3-4050-a8f8-c338669d0210",
+              "name": "bairro",
+              "value": "={{ $json.body.bairro ?? \"Não informado\" }}",
+              "type": "string"
+            },
+            {
+              "id": "bdc3c61f-3576-43a5-89ec-ab9bdf7b8b4a",
+              "name": "canal_origem",
+              "value": "={{ $json.body.canal_origem ?? \"webhook\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        160,
+        -240
+      ],
+      "id": "ac434b06-6d0f-4d80-a5d1-b6fb6ff42f94",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/triagem",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}"
+            },
+            {
+              "name": "bairro",
+              "value": "={{ $json.bairro }}"
+            },
+            {
+              "name": "canal_origem",
+              "value": "={{ $json.canal_origem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        -240
+      ],
+      "id": "27f54c07-10db-47e0-b4ae-fb8693e291e6",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.prioridade }}",
+                    "rightValue": "alta",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a381826a-c288-4c5b-b647-28ed95fb1bf8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "alta"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "07904b61-2eb2-4e2e-ba60-fb7e37fc1f01",
+                    "leftValue": "={{ $json.prioridade }}",
+                    "rightValue": "media",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "media"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "03f061c6-7c15-4d48-9031-32ddd899e4d0",
+                    "leftValue": "={{ $json.prioridade }}",
+                    "rightValue": "baixa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "baixa"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        608,
+        -256
+      ],
+      "id": "fa73d913-31bf-4ac8-9497-7ad635146095",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3d01558-08f6-439e-a299-56697beece34",
+              "name": "categoria",
+              "value": "={{ $('HTTP Request').item.json.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "0f4aeb10-da4b-48e2-a821-a82dd15e2e29",
+              "name": "prioridade",
+              "value": "={{ $('HTTP Request').item.json.prioridade }}",
+              "type": "string"
+            },
+            {
+              "id": "eeebedf4-422b-4df1-8b08-3664e1141952",
+              "name": "encaminhamento_sugerido",
+              "value": "={{ $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "38b77572-5a7a-4781-bf45-1dbc8e3eaf62",
+              "name": "resumo_curto",
+              "value": "={{ $('HTTP Request').item.json.resumo_curto }}",
+              "type": "string"
+            },
+            {
+              "id": "5cdcda65-28f7-4d94-a9c8-26c9d90fb80b",
+              "name": "justificativa",
+              "value": "={{ $('HTTP Request').item.json.justificativa }}",
+              "type": "string"
+            },
+            {
+              "id": "3ada50df-517e-40de-b5dd-6b18534ee9e4",
+              "name": "bairro",
+              "value": "={{ $('Edit Fields').item.json.bairro }}",
+              "type": "string"
+            },
+            {
+              "id": "43bb5b06-60cc-49d9-8e73-f1c89ba0f71d",
+              "name": "canal_origem",
+              "value": "={{ $('Edit Fields').item.json.canal_origem }}",
+              "type": "string"
+            },
+            {
+              "id": "5592de42-d1d0-4bab-9586-837d89ebe4d5",
+              "name": "fila_destino",
+              "value": "={{ \"Fila Prioritária — \" + $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "c658a28d-ff14-4a70-935c-7e1b8ddf3644",
+              "name": "acao_automatica",
+              "value": "={{ \"Disparar alerta de prioridade alta (\" + $('HTTP Request').item.json.categoria + \") para \" + $('HTTP Request').item.json.encaminhamento_sugerido + \" e priorizar análise imediata.\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        832,
+        -432
+      ],
+      "id": "8aadfb39-3ee1-48d0-ad3d-af9b06b39c07",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3d01558-08f6-439e-a299-56697beece34",
+              "name": "categoria",
+              "value": "={{ $('HTTP Request').item.json.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "0f4aeb10-da4b-48e2-a821-a82dd15e2e29",
+              "name": "prioridade",
+              "value": "={{ $('HTTP Request').item.json.prioridade }}",
+              "type": "string"
+            },
+            {
+              "id": "eeebedf4-422b-4df1-8b08-3664e1141952",
+              "name": "encaminhamento_sugerido",
+              "value": "={{ $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "38b77572-5a7a-4781-bf45-1dbc8e3eaf62",
+              "name": "resumo_curto",
+              "value": "={{ $('HTTP Request').item.json.resumo_curto }}",
+              "type": "string"
+            },
+            {
+              "id": "5cdcda65-28f7-4d94-a9c8-26c9d90fb80b",
+              "name": "justificativa",
+              "value": "={{ $('HTTP Request').item.json.justificativa }}",
+              "type": "string"
+            },
+            {
+              "id": "3ada50df-517e-40de-b5dd-6b18534ee9e4",
+              "name": "bairro",
+              "value": "={{ $('Edit Fields').item.json.bairro }}",
+              "type": "string"
+            },
+            {
+              "id": "43bb5b06-60cc-49d9-8e73-f1c89ba0f71d",
+              "name": "canal_origem",
+              "value": "={{ $('Edit Fields').item.json.canal_origem }}",
+              "type": "string"
+            },
+            {
+              "id": "5592de42-d1d0-4bab-9586-837d89ebe4d5",
+              "name": "fila_destino",
+              "value": "={{ \"Fila de Acompanhamento — \" + $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "c658a28d-ff14-4a70-935c-7e1b8ddf3644",
+              "name": "acao_automatica",
+              "value": "={{ \"Encaminhar para \" + $('HTTP Request').item.json.encaminhamento_sugerido + \", registrar acompanhamento de prioridade média e monitorar retorno.\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        832,
+        -240
+      ],
+      "id": "63aaa142-c8de-4b25-a680-5b584b53cce6",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3d01558-08f6-439e-a299-56697beece34",
+              "name": "categoria",
+              "value": "={{ $('HTTP Request').item.json.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "0f4aeb10-da4b-48e2-a821-a82dd15e2e29",
+              "name": "prioridade",
+              "value": "={{ $('HTTP Request').item.json.prioridade }}",
+              "type": "string"
+            },
+            {
+              "id": "eeebedf4-422b-4df1-8b08-3664e1141952",
+              "name": "encaminhamento_sugerido",
+              "value": "={{ $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "38b77572-5a7a-4781-bf45-1dbc8e3eaf62",
+              "name": "resumo_curto",
+              "value": "={{ $('HTTP Request').item.json.resumo_curto }}",
+              "type": "string"
+            },
+            {
+              "id": "5cdcda65-28f7-4d94-a9c8-26c9d90fb80b",
+              "name": "justificativa",
+              "value": "={{ $('HTTP Request').item.json.justificativa }}",
+              "type": "string"
+            },
+            {
+              "id": "3ada50df-517e-40de-b5dd-6b18534ee9e4",
+              "name": "bairro",
+              "value": "={{ $('Edit Fields').item.json.bairro }}",
+              "type": "string"
+            },
+            {
+              "id": "43bb5b06-60cc-49d9-8e73-f1c89ba0f71d",
+              "name": "canal_origem",
+              "value": "={{ $('Edit Fields').item.json.canal_origem }}",
+              "type": "string"
+            },
+            {
+              "id": "5592de42-d1d0-4bab-9586-837d89ebe4d5",
+              "name": "fila_destino",
+              "value": "={{ \"Fila Padrão — \" + $('HTTP Request').item.json.encaminhamento_sugerido }}",
+              "type": "string"
+            },
+            {
+              "id": "c658a28d-ff14-4a70-935c-7e1b8ddf3644",
+              "name": "acao_automatica",
+              "value": "={{ \"Registrar demanda de prioridade baixa (\" + $('HTTP Request').item.json.categoria + \") em \" + $('HTTP Request').item.json.encaminhamento_sugerido + \" para fluxo padrão.\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        832,
+        -48
+      ],
+      "id": "58669fec-2442-4136-acc8-3e0d62b72df8",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1056,
+        -240
+      ],
+      "id": "d6e6ee35-d804-4226-9353-a2506b50a129",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "user-agent": "Mozilla/5.0 (Windows NT; Windows NT 10.0; pt-BR) WindowsPowerShell/5.1.26100.9818",
+            "content-type": "application/json; charset=utf-8",
+            "host": "localhost:5678",
+            "content-length": "151",
+            "connection": "Keep-Alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "mensagem": "Há terreno baldio com água parada e foco de mosquito perto da unidade.",
+            "bairro": "Cidade da Esperança",
+            "canal_origem": "formulario_web"
+          },
+          "webhookUrl": "http://localhost:5678/webhook-test/triar-saude",
+          "executionMode": "test"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d7991414-7b68-4d72-b9d5-5545b997c1ba",
+  "meta": {
+    "instanceId": "7aee39a271fac8ef52c46438798b4098b2e1fd379bbcea3d3fbbb6372701d60e"
+  },
+  "nodeGroups": [],
+  "id": "K5bjmprigBq3htpc",
+  "tags": []
+}
