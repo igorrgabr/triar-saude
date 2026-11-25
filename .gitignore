@@ -1,0 +1,24 @@
+# Variáveis de ambiente e segredos
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+
+# IDEs e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Dados locais do n8n (caso rode fora do Docker Compose)
+.n8n/
